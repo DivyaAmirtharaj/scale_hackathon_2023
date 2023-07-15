@@ -1,6 +1,5 @@
 import sqlite3
 import re
-import random
 
 def thread_db(fn):
     def set_up(self, *args, **kwargs):
