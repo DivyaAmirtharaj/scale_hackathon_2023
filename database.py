@@ -93,13 +93,11 @@ class Database(object):
             raise Exception("No user found for this uuid")
         return user[0]
     
-
     # If a conversation, create a new conversation id and add the list of users that are in the conversation
     @thread_db
     def add_conversation(self, con, cur):
         pass
         
-
     # Adds messages sent from the clients into the database.  Names the messages by pulling the most recent entry
     # in the database and adding 1 to create a unique message id.
     @thread_db
@@ -124,11 +122,10 @@ class Database(object):
             print(e)
         con.commit()
 
-    # Called by the message stream in the grpc client/ server and queries all message history.  We use checkpoints
-    # to identify which messages in history have already been sent and which should be queued.
+    # Get full message history for a conversation
     @thread_db
     def get_message(self, con, cur, conversation_id):
-        # Given a receiver_id, and the sender_id get the message history between the two users
+        # Given a conversation_id, pull all messages in
         cur.execute("""
             SELECT msgid, send_id, message 
             FROM messages
@@ -144,11 +141,7 @@ class Database(object):
             send_name = cur.fetchone()
             if send_name is None:
                 raise Exception("Sender doesn't exist")
-            cur.execute("SELECT username FROM users WHERE (uuid = ?)", [row[2]])
-            receive_name = cur.fetchone()
-            if receive_name is None:
-                raise Exception("Receiver doesn't exist")
-            history.append({"msgid": row[0], "send_name": send_name[0], "receive_name": receive_name[0], "message": row[3]})
+            history.append({"msgid": row[0], "send_name": send_name[0], "message": row[2]})
         return history
     
     # Pulled by general client/ server to get full message history
@@ -172,11 +165,3 @@ class Database(object):
         for row in rows:
             history.append({'send_id': row[1], 'message': row[3]})
         return history
-
-    # Deletes seen messages from the database to prevent duplicate views
-    @thread_db
-    def delete_history_for_receiver(self, con, cur, receive_id):
-        cur.execute("""
-            DELETE FROM messages WHERE (receive_id = ?)
-        """, [receive_id])
-        con.commit()
