@@ -10,9 +10,9 @@ class MessageManager():
         self.database.create_table()
         
         self.slack_api_manager = SlackAPIManager('insert_token')
-
-        # Populate user table
         user_json = self.slack_api_manager.get_user_list()
+        messages_json = self.slack_api_manager.get_conversation_history()
+
         user_dict = clean_user_list(user_json)
         for key, value in user_dict:
             character_prompt = ""
