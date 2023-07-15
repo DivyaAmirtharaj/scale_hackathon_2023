@@ -20,6 +20,7 @@ def clean_message_list(messages_json: dict):
                 conversation_users.append(event["user"])
     
     conversation_dict = {conversation_id: " ".join(conversation_users)}
+    message_dict = dict(sorted(message_dict.items()))
     return message_dict, conversation_dict
 
 
