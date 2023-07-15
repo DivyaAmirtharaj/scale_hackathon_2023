@@ -13,26 +13,25 @@ def thread_db(fn):
     return set_up
 
 class Database(object):
-    def __init__(self, port) -> None:
-        self.port = port
+    def __init__(self) -> None:
+        pass
     
     # Called upon initialization of the server to create a new table to store unique user info, as well as messages
     @thread_db
     def create_table(self, con, cur):
-        # create user table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 uuid integer PRIMARY KEY,
                 name text,
-                character_prompt text,
-            );
+                character_prompt text
+            )
         """)
         # create a conversations table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS conversation (
                 conversation_id integer PRIMARY KEY,
-                uuid_list text,
-            );
+                uuid_list text
+            )
         """)
         # create a messages table
         cur.execute("""
@@ -43,10 +42,11 @@ class Database(object):
                 send_id integer,
                 message text,
                 message_metadata text,
-                prompt text,
-            );
+                prompt text
+            )
         """)
         con.commit()
+
     
     @thread_db
     def delete_table(self, con, cur):
