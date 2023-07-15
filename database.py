@@ -21,7 +21,7 @@ class Database(object):
     def create_table(self, con, cur):
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                uuid integer PRIMARY KEY,
+                uuid string PRIMARY KEY,
                 username text,
                 character_prompt text
             )
@@ -41,7 +41,6 @@ class Database(object):
                 timestamp integer,
                 send_id integer,
                 message text,
-                message_metadata text,
                 prompt text
             )
         """)
@@ -55,9 +54,7 @@ class Database(object):
         con.commit()
     
     @thread_db
-    def add_users(self, con, cur, username, character_prompt):
-        # Random generation of uuid for thread safety
-        uuid = random.randint(1, 2**20)
+    def add_users(self, con, cur, uuid, username, character_prompt):
         cur.execute("""
             INSERT INTO users (uuid, username, character_prompt)
                 VALUES (?, ?, ?)
@@ -95,13 +92,17 @@ class Database(object):
     
     # If a conversation, create a new conversation id and add the list of users that are in the conversation
     @thread_db
-    def add_conversation(self, con, cur):
-        pass
+    def add_conversation(self, con, cur, conversation_id, uuid_list):
+        cur.execute("""
+            INSERT INTO conversation (conversation_id, uuid_list)
+                VALUES (?, ?)
+        """, [conversation_id, uuid_list])
+        con.commit()
         
     # Adds messages sent from the clients into the database.  Names the messages by pulling the most recent entry
     # in the database and adding 1 to create a unique message id.
     @thread_db
-    def add_message(self, con, cur, timestamp, conversation_id, send_id, message, message_metadata, image_prompt):
+    def add_message(self, con, cur, timestamp, conversation_id, send_id, message, image_prompt):
         
         # Selects the most recent message
         cur.execute("""
@@ -115,9 +116,9 @@ class Database(object):
             latest = latest[0]
         try:
             cur.execute("""
-                INSERT INTO messages (msgid, timestamp, conversation_id, send_id, message, message_metadata, image_prompt)
+                INSERT INTO messages (msgid, timestamp, conversation_id, send_id, message, image_prompt)
                     VALUES (?, ?, ?)
-            """, [latest + 1, conversation_id, send_id, message, message_metadata, image_prompt])
+            """, [latest + 1, timestamp, conversation_id, send_id, message, image_prompt])
         except Exception as e:
             print(e)
         con.commit()
