@@ -1,34 +1,22 @@
-# ---
-# deploy: true
-# integration-test: false
-# ---
-#
-# # Pet Art Dreambooth with Hugging Face and Gradio
-#
-# This example finetunes the [Stable Diffusion v1.5 model](https://huggingface.co/runwayml/stable-diffusion-v1-5)
-# on images of a pet (by default, a puppy named Qwerty)
-# using a technique called textual inversion from [the "Dreambooth" paper](https://dreambooth.github.io/).
-# Effectively, it teaches a general image generation model a new "proper noun",
-# allowing for the personalized generation of art and photos.
-# It then makes the model shareable with others using the [Gradio.app](https://gradio.app/)
-# web interface framework.
-#
-# It demonstrates a simple, productive, and cost-effective pathway
-# to building on large pretrained models
-# by using Modal's building blocks, like
-# [GPU-accelerated](https://modal.com/docs/guide/gpu#using-a100-gpus-alpha) Modal Functions, [shared volumes](https://modal.com/docs/guide/shared-volumes#shared-volumes) for caching, and [Modal webhooks](https://modal.com/docs/guide/webhooks#webhook).
-#
-# And with some light customization, you can use it to generate images of your pet!
-#
-# ![Gradio.app image generation interface](./gradio-image-generate.png)
-#
-# ## Setting up the dependencies
-#
-# We can start from a base image and specify all of our dependencies.
-
+# All the credit goes to Modal. And Richard Gong.
 
 # upload your custom data with this command:
 # modal nfs put comic-multicharactergen-vol ./data/man img/
+
+# checklist for running from a pretrained model
+# change the name of the character
+# use the put command above to upload the new data for this model
+# change the data_dir in the train script
+# makedir the new MODEL_DIRX variable
+# create the new MODEL_DIRX variable
+# change the from_trainable thing in accelerate to point to old model
+# put MODEL_DIRX variable as output flag in accelerate command
+# plug MODEL_DIRX variable into the DDIM scheduler and the diffusion pipeline
+
+
+# to toggle which version of the model performs the inference, change the variables in:
+# class Model: [insert the MODEL_DIRX variable here]
+# by default it should be set to the latest version model
 
 import os
 from dataclasses import dataclass
@@ -85,6 +73,7 @@ image = (
 volume = NetworkFileSystem.persisted("comic-multicharactergen-vol")
 MOUNT_DIR = Path("/mnt")
 MODEL_DIR = Path("/mnt/model01") 
+MODEL2_DIR = Path("/mnt/model02")
 
 # ## Config
 #
@@ -98,7 +87,7 @@ class SharedConfig:
     """Configuration information shared across project components."""
 
     # The instance name is the "proper noun" we're teaching the model
-    instance_name: str = "Dzude"
+    instance_name: str = "Frosty"
     # That proper noun is usually a member of some class (person, bird),
     # and sharing that information with the model helps it generalize better.
     class_name: str = "Man"
@@ -137,30 +126,6 @@ class AppConfig(SharedConfig):
 
     num_inference_steps: int = 50
     guidance_scale: float = 7.5
-
-
-# ## Get finetuning dataset
-#
-# Part of the magic of Dreambooth is that we only need 4-10 images for finetuning.
-# So we can fetch just a few images, stored on consumer platforms like Imgur or Google Drive
-# -- no need for expensive data collection or data engineering.
-
-# IMG_PATH = Path("/img")
-
-
-# def load_images(image_urls):
-#     import PIL.Image
-#     from smart_open import open
-
-#     os.makedirs(IMG_PATH, exist_ok=True)
-#     for ii, url in enumerate(image_urls):
-#         with open(url, "rb") as f:
-#             image = PIL.Image.open(f)
-#             image.save(IMG_PATH / f"{ii}.png")
-#     print("Images loaded.")
-
-#     return IMG_PATH
-
 
 # ## Finetuning a text-to-image model
 #
@@ -216,8 +181,8 @@ def train(instance_example_urls):
 
     # set up runner-local image and shared model weight directories
     # img_path = load_images(instance_example_urls)
-    img_path = "/mnt/img/man"
-    os.makedirs(MODEL_DIR, exist_ok=True)
+    img_path = "/mnt/img/man2"
+    os.makedirs(MODEL2_DIR, exist_ok=True)
 
     # set up hugging face accelerate library for fast training
     write_basic_config(mixed_precision="fp16")
@@ -245,9 +210,9 @@ def train(instance_example_urls):
             "launch",
             "examples/dreambooth/train_dreambooth.py",
             "--train_text_encoder",  # needs at least 16GB of GPU RAM.
-            f"--pretrained_model_name_or_path={config.model_name}", #config.model_name
+            f"--pretrained_model_name_or_path={str(MODEL_DIR)}", #config.model_name
             f"--instance_data_dir={img_path}",
-            f"--output_dir={MODEL_DIR}",
+            f"--output_dir={MODEL2_DIR}",
             f"--instance_prompt='{prompt}'",
             f"--resolution={config.resolution}",
             f"--train_batch_size={config.train_batch_size}",
@@ -281,9 +246,9 @@ class Model:
         from diffusers import DDIMScheduler, StableDiffusionPipeline
 
         # set up a hugging face inference pipeline using our model
-        ddim = DDIMScheduler.from_pretrained(MODEL_DIR, subfolder="scheduler")
+        ddim = DDIMScheduler.from_pretrained(MODEL2_DIR, subfolder="scheduler")
         pipe = StableDiffusionPipeline.from_pretrained(
-            MODEL_DIR,
+            MODEL2_DIR,
             scheduler=ddim,
             torch_dtype=torch.float16,
             safety_checker=None,
@@ -356,7 +321,7 @@ def fastapi_app():
         fn=go,
         inputs="text",
         outputs=gr.Image(shape=(512, 512)),
-        title=f"Generate images of {instance_phrase}.",
+        title=f"Cast: Frosty the Man, Dzude the Man, Sally the Woman, Xerina the Woman.",
         description=description,
         examples=example_prompts,
         css="/assets/index.css",
@@ -380,9 +345,7 @@ def fastapi_app():
 # - `modal serve app.py` will [serve](https://modal.com/docs/guide/webhooks#developing-with-modal-serve) the Gradio interface at a temporarily location.
 # - `modal shell app.py` is a convenient helper to open a bash [shell](https://modal.com/docs/guide/developing-debugging#stubinteractive_shell) in our image (for debugging)
 #
-# Remember, once you've trained your own fine-tuned model, you can deploy it using `modal deploy dreambooth_app.py`.
-#
-# This app is already deployed on Modal and you can try it out at https://modal-labs-example-dreambooth-app-fastapi-app.modal.run
+# Remember, once you've trained your own fine-tuned model, you can deploy it using `modal deploy app.py`.
 
 
 @stub.local_entrypoint()
