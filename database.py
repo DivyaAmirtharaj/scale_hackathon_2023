@@ -21,7 +21,7 @@ class Database(object):
     def create_table(self, con, cur):
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                uuid integer PRIMARY KEY,
+                uuid string PRIMARY KEY,
                 username text,
                 character_prompt text
             )
@@ -55,9 +55,8 @@ class Database(object):
         con.commit()
     
     @thread_db
-    def add_users(self, con, cur, username, character_prompt):
+    def add_users(self, con, cur, uuid, username, character_prompt):
         # Random generation of uuid for thread safety
-        uuid = random.randint(1, 2**20)
         cur.execute("""
             INSERT INTO users (uuid, username, character_prompt)
                 VALUES (?, ?, ?)
