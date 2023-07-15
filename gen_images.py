@@ -102,7 +102,7 @@ class ComicDiffusion:
                 images = self.pipe(
                     [prompt] * batch_size,
                     num_inference_steps=steps,
-                    guidance_scale=7.0,
+                    guidance_scale=12.0,
                 ).images
 
         # Convert to PNG bytes
@@ -115,7 +115,7 @@ class ComicDiffusion:
 
 
 @stub.local_entrypoint()
-def entrypoint(prompt: str, samples: int = 5, steps: int = 10, batch_size: int = 1):
+def entrypoint(prompt: str, samples: int = 20, steps: int = 40, batch_size: int = 1):
     print(
         f"prompt => {prompt}, steps => {steps}, samples => {samples}, batch_size => {batch_size}"
     )
