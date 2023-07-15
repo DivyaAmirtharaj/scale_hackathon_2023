@@ -28,3 +28,9 @@ def monitor_list():
         else:
             print("List is empty")
         time.sleep(1)  # Pause for a second between checks
+
+# Create a thread that runs the monitor_list function
+monitor_thread = threading.Thread(target=monitor_list)
+
+# Start the thread
+monitor_thread.start()
