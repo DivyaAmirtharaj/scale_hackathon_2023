@@ -120,7 +120,7 @@ def entrypoint(prompt: str, samples: int = 20, steps: int = 40, batch_size: int 
         f"prompt => {prompt}, steps => {steps}, samples => {samples}, batch_size => {batch_size}"
     )
 
-    dir = Path("./tmp/comic-diffusion")
+    dir = Path("./comic-diffusion/" + prompt.split(",")[0] + str(hash(prompt)))
     if not dir.exists():
         dir.mkdir(exist_ok=True, parents=True)
 

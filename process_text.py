@@ -23,18 +23,19 @@ def gpt_output_to_diffusion_prompt(o):
 
 
 result = gpt_output_to_diffusion_prompt(
-    """Bill Description: George Clooney as a 45 year old businessman, salt and pepper hair, sharp suit
-Joe Description: Ryan Gosling as a 35 year old engineer, blonde hair, glasses
-Scene Background: Bill and Joe in a high-rise office, cityscape through the window, late evening
-Scene Descriptors: high-rise office, cityscape view, late evening, sleek office decor
-Line 1: Bill, serious, looking straight at Joe, hands clasped on the table
-Line 2: Bill, acknowledging, nodding in appreciation, still maintaining eye contact
-Line 3: Bill, furrowing his brow, hands gesturing for emphasis
-Line 4: Joe, apologetic, looking down, hands clasped
-Line 5: Joe, explaining, gesturing with one hand, looking hopeful
-Line 6: Bill, angry, pointing at Joe, voice raised
-Line 7: Bill, dismissive, turning away, arm extended towards the door."""
+    """Roman Description: George Clooney as a 45 year old businessman, salt and pepper hair, wearing a suit
+Sarah Description: Jennifer Aniston as a 40 year old artist, wavy brown hair, wearing a summer dress
+Scene Background: Roman and Sarah, standing in a modern art gallery, surrounded by contemporary paintings and sculptures
+Scene Descriptors: modern art gallery, contemporary paintings and sculptures, bright lighting, large windows
+Line 1: Roman, serious, looking straight ahead, hands clasped
+Line 2: Sarah, surprised, raising an eyebrow
+Line 3: Roman, looking down, sorrowful
+Line 4: Roman, looking away, regretful
+Line 5: Roman, closing eyes, pained expression
+Line 6: Sarah, shocked, mouth open
+Line 7: Roman, looking at Sarah, nodding
+Line 8: Roman, apologetic, looking down."""
 )
 
-pp = pprint.PrettyPrinter()
-pp.pprint(result)
+for x in result:
+    print(x)
