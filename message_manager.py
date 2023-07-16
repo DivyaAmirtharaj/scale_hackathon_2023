@@ -3,13 +3,14 @@ from database import Database
 from slack import SlackAPIManager
 from slack_helper import clean_user_list, clean_message_list
 
-class MessageManager():
+
+class MessageManager:
     def __init__(self) -> None:
         self.conversation_id = None
         self.database = Database()
         # self.database.delete_table()
         # self.database.create_table()
-        
+
         # Get data from Slack
         # self.slack_api_manager = SlackAPIManager('api-token')
         # self.user_json = self.slack_api_manager.get_user_list()
@@ -29,10 +30,15 @@ class MessageManager():
         for key, value in message_dict.items():
             self.conversation_id = value["conversation_id"]
             image_prompt = ""
-            self.database.add_message(key, value["conversation_id"], value["send_id"], value["message"], image_prompt)
+            self.database.add_message(
+                key,
+                value["conversation_id"],
+                value["send_id"],
+                value["message"],
+                image_prompt,
+            )
 
     def get_data(self):
         history = self.database.get_message(79225)
         # history = self.database.get_message(self.conversation_id)
         return history
-
