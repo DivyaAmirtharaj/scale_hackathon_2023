@@ -93,7 +93,7 @@ class Database(object):
     @thread_db
     def add_conversation(self, con, cur, conversation_id, uuid_list):
         cur.execute("""
-            INSERT INTO conversation (conversation_id, uuid_list)
+            INSERT INTO conversations (conversation_id, uuid_list)
                 VALUES (?, ?)
         """, [conversation_id, uuid_list])
         con.commit()

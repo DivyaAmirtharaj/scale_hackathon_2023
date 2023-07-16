@@ -10,9 +10,9 @@ class MessageManager():
         self.database.create_table()
         
         # Get data from Slack
-        self.slack_api_manager = SlackAPIManager('xoxb-5571078244199-5571084859927-QzeaiU7RY6OGGYVk7JUrj96S')
+        self.slack_api_manager = SlackAPIManager('api-token')
         user_json = self.slack_api_manager.get_user_list()
-        messages_json = self.slack_api_manager.get_conversation_history('C05H7ET044T')
+        messages_json = self.slack_api_manager.get_conversation_history('conversation-token')
 
         
         # Populate users table
