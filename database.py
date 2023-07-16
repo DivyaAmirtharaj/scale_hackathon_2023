@@ -1,6 +1,5 @@
 import sqlite3
 import re
-import random
 
 def thread_db(fn):
     def set_up(self, *args, **kwargs):
@@ -38,8 +37,8 @@ class Database(object):
             CREATE TABLE IF NOT EXISTS messages (
                 msgid integer PRIMARY KEY,
                 conversation_id integer,
-                timestamp integer,
-                send_id integer,
+                timestamp float,
+                send_id string,
                 message text,
                 prompt text
             )
@@ -94,7 +93,7 @@ class Database(object):
     @thread_db
     def add_conversation(self, con, cur, conversation_id, uuid_list):
         cur.execute("""
-            INSERT INTO conversation (conversation_id, uuid_list)
+            INSERT INTO conversations (conversation_id, uuid_list)
                 VALUES (?, ?)
         """, [conversation_id, uuid_list])
         con.commit()
@@ -103,7 +102,6 @@ class Database(object):
     # in the database and adding 1 to create a unique message id.
     @thread_db
     def add_message(self, con, cur, timestamp, conversation_id, send_id, message, image_prompt):
-        
         # Selects the most recent message
         cur.execute("""
             SELECT msgid FROM messages ORDER BY msgid DESC LIMIT 1
@@ -116,8 +114,8 @@ class Database(object):
             latest = latest[0]
         try:
             cur.execute("""
-                INSERT INTO messages (msgid, timestamp, conversation_id, send_id, message, image_prompt)
-                    VALUES (?, ?, ?)
+                INSERT INTO messages (msgid, timestamp, conversation_id, send_id, message, prompt)
+                    VALUES (?, ?, ?, ?, ?, ?)
             """, [latest + 1, timestamp, conversation_id, send_id, message, image_prompt])
         except Exception as e:
             print(e)

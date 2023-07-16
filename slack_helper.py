@@ -15,7 +15,7 @@ def clean_message_list(messages_json: dict):
     for i in range(len(messages_json["messages"])):
         event = messages_json["messages"][i]
         if "client_msg_id" in event:
-            message_dict[event["ts"]] = {"conversation_id": conversation_id, "send_id": event["user"], "message": event["text"]}
+            message_dict[float(event["ts"])] = {"conversation_id": conversation_id, "send_id": event["user"], "message": event["text"]}
             if event["user"] not in conversation_users:
                 conversation_users.append(event["user"])
     
@@ -26,10 +26,9 @@ def clean_message_list(messages_json: dict):
 
 """with open('example_jsons/user.json', 'r') as file:
     user_json = json.load(file)
-clean_user_list(user_json)
+user_dict = clean_user_list(user_json)"""
 
 
-with open('example_jsons/messages.json', 'r') as file:
+with open('slack_data/messages.json', 'r') as file:
     messages_json = json.load(file)
 message_dict, conversation_dict = clean_message_list(messages_json)
-print(message_dict, conversation_dict)"""

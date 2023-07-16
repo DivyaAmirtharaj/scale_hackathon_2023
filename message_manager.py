@@ -1,4 +1,4 @@
-import threading
+import json
 from database import Database
 from slack import SlackAPIManager
 from slack_helper import clean_user_list, clean_message_list
@@ -9,21 +9,23 @@ class MessageManager():
         self.database.delete_table()
         self.database.create_table()
         
-        self.slack_api_manager = SlackAPIManager('insert_token')
-
-        # Populate user table
+        # Get data from Slack
+        self.slack_api_manager = SlackAPIManager('api-token')
         user_json = self.slack_api_manager.get_user_list()
+        messages_json = self.slack_api_manager.get_conversation_history('conversation-token')
+
+        
+        # Populate users table
         user_dict = clean_user_list(user_json)
-        for key, value in user_dict:
+        for key, value in user_dict.items():
             character_prompt = ""
             self.database.add_users(key, value["name"], character_prompt)
 
         # Populate conversation/ messages table
-        messages_json = self.slack_api_manager.get_conversation_history()
         message_dict, conversation_dict = clean_message_list(messages_json)
-        for key, value in conversation_dict:
+        for key, value in conversation_dict.items():
             self.database.add_conversation(key, value)
-        for key, value in message_dict:
+        for key, value in message_dict.items():
             image_prompt = ""
             self.database.add_message(key, value["conversation_id"], value["send_id"], value["message"], image_prompt)
 
