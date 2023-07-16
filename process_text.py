@@ -1,9 +1,12 @@
 import pprint
+import requests
 
 
 def gpt_output_to_diffusion_prompt(o):
     # Process prompt output to pull character descriptions
     # Transform into Stable Diffusion inputs
+
+    print("Converting GPT output to diffusion prompts.")
     components = o.split("\n")
     (char1Name, char1Desc) = components[0].split(" Description: ")
     (char2Name, char2Desc) = components[1].split(" Description: ")
@@ -11,31 +14,39 @@ def gpt_output_to_diffusion_prompt(o):
     frameDescsRaw = [components[2]] + list(
         map(lambda x: x.split(": ")[1], components[4:])
     )
+    frameDescs2 = []
+    for x in frameDescsRaw:
+        if char1Name in x and char2Name in x:
+            if x.index(char1Name) < x.index(char2Name):
+                frameDescs2.append(x.replace(char2Name, ""))
+            else:
+                frameDescs2.append(x.replace(char1Name, ""))
+        else:
+            frameDescs2.append(x)
     frameDescs = list(
         map(
             lambda x: x.replace(char1Name, char1Desc).replace(char2Name, char2Desc)
             + ", "
             + sceneDesc,
-            frameDescsRaw,
+            frameDescs2,
         )
     )
+    print("Diffusion prompts: ", frameDescs)
     return frameDescs
 
 
-result = gpt_output_to_diffusion_prompt(
-    """Roman Description: George Clooney as a 45 year old businessman, salt and pepper hair, wearing a suit
-Sarah Description: Jennifer Aniston as a 40 year old artist, wavy brown hair, wearing a summer dress
-Scene Background: Roman and Sarah, standing in a modern art gallery, surrounded by contemporary paintings and sculptures
-Scene Descriptors: modern art gallery, contemporary paintings and sculptures, bright lighting, large windows
-Line 1: Roman, serious, looking straight ahead, hands clasped
-Line 2: Sarah, surprised, raising an eyebrow
-Line 3: Roman, looking down, sorrowful
-Line 4: Roman, looking away, regretful
-Line 5: Roman, closing eyes, pained expression
-Line 6: Sarah, shocked, mouth open
-Line 7: Roman, looking at Sarah, nodding
-Line 8: Roman, apologetic, looking down."""
-)
+def dialogue_to_gpt_input(dialogue):
+    print("Converting dialogue to GPT Input.")
+    gpt_url = "https://dashboard.scale.com/spellbook/api/v2/deploy/w533d85"
+    headers = {"Authorization": "Bearer clk4hgwlb00rb1axr3kypcr3p"}
+    data = {"input": {"input": dialogue}}
 
-for x in result:
-    print(x)
+    response = requests.post(gpt_url, headers=headers, json=data)
+    parsed_image_prompt = response.json()["output"]
+    print("GPT input: ", parsed_image_prompt)
+    return parsed_image_prompt
+
+
+def dialogue_cleaned(dialogue):
+    comps = dialogue.split("\n")
+    return list(map(lambda x: x.split(": ")[1], comps))

@@ -4,12 +4,17 @@ import io
 import os
 import time
 from pathlib import Path
+from process_text import (
+    gpt_output_to_diffusion_prompt,
+    dialogue_to_gpt_input,
+    dialogue_cleaned,
+)
 
 from modal import Image, Secret, Stub, method
 
 stub = Stub("kachow-image-gen")
 
-model_id = "ogkalu/Comic-Diffusion"
+model_id = "nitrosocke/Nitro-Diffusion"
 cache_path = "/vol/cache"
 
 
@@ -115,25 +120,43 @@ class ComicDiffusion:
 
 
 @stub.local_entrypoint()
-def entrypoint(prompt: str, samples: int = 20, steps: int = 40, batch_size: int = 1):
-    print(
-        f"prompt => {prompt}, steps => {steps}, samples => {samples}, batch_size => {batch_size}"
-    )
+def entrypoint(samples: int = 1, steps: int = 40, batch_size: int = 1):
+    dialogue = """Roman: I’ve been thinking. We need to talk.
+    Sarah: Thinking about what?
+    Roman: About us.
+    Roman: I don’t think we’re good for each other.
+    Roman: I think it may be over for us.
+    Sarah: Are you saying we’re breaking up??
+    Roman: Yes.
+    Roman: I’m sorry."""
+    dialogue_only = dialogue_cleaned(dialogue)
+    gpt_output = dialogue_to_gpt_input(dialogue)
+    diffusion_prompts = gpt_output_to_diffusion_prompt(gpt_output)
 
-    dir = Path("./comic-diffusion/" + prompt.split(",")[0] + str(hash(prompt)))
+    dir = Path("./prod")
     if not dir.exists():
         dir.mkdir(exist_ok=True, parents=True)
 
     sd = ComicDiffusion()
-    for i in range(samples):
-        t0 = time.time()
-        images = sd.run_inference.call(prompt, steps, batch_size)
-        total_time = time.time() - t0
-        print(
-            f"Sample {i} took {total_time:.3f}s ({(total_time)/len(images):.3f}s / image)."
-        )
-        for j, image_bytes in enumerate(images):
-            output_path = dir / f"output_{j}_{i}.png"
-            print(f"Saving it to {output_path}")
-            with open(output_path, "wb") as f:
-                f.write(image_bytes)
+    for k, prompt in enumerate(diffusion_prompts):
+        for i in range(samples):
+            t0 = time.time()
+            images = sd.run_inference.call(prompt, steps, batch_size)
+            total_time = time.time() - t0
+            print(
+                f"Sample {i} took {total_time:.3f}s ({(total_time)/len(images):.3f}s / image)."
+            )
+            for j, image_bytes in enumerate(images):
+                output_path = dir / f"output_{k}_{i}.png"
+                print(f"Saving it to {output_path}")
+                with open(output_path, "wb") as f:
+                    f.write(image_bytes)
+
+                # img = Image.open(output_path).convert("RGB")
+                # boxes = get_bounding_boxes.call(img)
+                # print(f"Bounding boxes: {boxes}")
+                # person = boxes[0]
+                # add_text(img, "Why are you so mean to me?", person)
+                # img.save(
+                #     f"{output_path.split('.')[0]}_processed_{output_path.split('.')[-1]}"
+                # )
