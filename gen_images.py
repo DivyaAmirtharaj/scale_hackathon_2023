@@ -14,7 +14,7 @@ from modal import Image, Secret, Stub, method
 
 stub = Stub("kachow-image-gen")
 
-model_id = "nitrosocke/Nitro-Diffusion"
+model_id = "ogkalu/Comic-Diffusion"
 cache_path = "/vol/cache"
 
 
@@ -121,15 +121,10 @@ class ComicDiffusion:
 
 @stub.local_entrypoint()
 def entrypoint(samples: int = 1, steps: int = 40, batch_size: int = 1):
-    dialogue = """Roman: I’ve been thinking. We need to talk.
-    Sarah: Thinking about what?
-    Roman: About us.
-    Roman: I don’t think we’re good for each other.
-    Roman: I think it may be over for us.
-    Sarah: Are you saying we’re breaking up??
-    Roman: Yes.
-    Roman: I’m sorry."""
-    dialogue_only = dialogue_cleaned(dialogue)
+    with open("dialogue.txt", "r") as f:
+        # Read the file
+        dialogue = f.read()
+    # dialogue_only = dialogue_cleaned(dialogue)
     gpt_output = dialogue_to_gpt_input(dialogue)
     diffusion_prompts = gpt_output_to_diffusion_prompt(gpt_output)
 

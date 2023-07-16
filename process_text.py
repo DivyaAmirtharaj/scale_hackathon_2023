@@ -28,7 +28,7 @@ def gpt_output_to_diffusion_prompt(o):
             lambda x: x.replace(char1Name, char1Desc).replace(char2Name, char2Desc)
             + ", "
             + sceneDesc,
-            frameDescs2,
+            frameDescs2 + ", zeiss lens, half length shot, octane render, 8k",
         )
     )
     print("Diffusion prompts: ", frameDescs)
