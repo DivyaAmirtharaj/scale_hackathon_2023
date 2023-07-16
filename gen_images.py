@@ -9,6 +9,7 @@ from process_text import (
     dialogue_to_gpt_input,
     dialogue_cleaned,
 )
+from test_text import add_text
 
 from modal import Image, Secret, Stub, method
 
@@ -133,7 +134,7 @@ def entrypoint(samples: int = 1, steps: int = 40, batch_size: int = 1):
         dir.mkdir(exist_ok=True, parents=True)
 
     sd = ComicDiffusion()
-    for k, prompt in enumerate(diffusion_prompts):
+    for k, prompt in enumerate(diffusion_prompts[1:]):
         for i in range(samples):
             t0 = time.time()
             images = sd.run_inference.call(prompt, steps, batch_size)
@@ -144,14 +145,9 @@ def entrypoint(samples: int = 1, steps: int = 40, batch_size: int = 1):
             for j, image_bytes in enumerate(images):
                 output_path = dir / f"output_{k}_{i}.png"
                 print(f"Saving it to {output_path}")
-                with open(output_path, "wb") as f:
+                path_str = str(output_path.absolute())
+                with open(path_str, "wb") as f:
                     f.write(image_bytes)
 
-                # img = Image.open(output_path).convert("RGB")
-                # boxes = get_bounding_boxes.call(img)
-                # print(f"Bounding boxes: {boxes}")
-                # person = boxes[0]
-                # add_text(img, "Why are you so mean to me?", person)
-                # img.save(
-                #     f"{output_path.split('.')[0]}_processed_{output_path.split('.')[-1]}"
-                # )
+                dialogue_k = dialogue_only[k]
+                add_text(path_str, dialogue_k)
