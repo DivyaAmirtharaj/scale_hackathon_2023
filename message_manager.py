@@ -4,16 +4,16 @@ from slack import SlackAPIManager
 from slack_helper import clean_user_list, clean_message_list
 
 class MessageManager():
-    def __init__(self) -> None:
-        self.conversation_id = None
+    def __init__(self, conversation_id='C05H7UH6NTU') -> None:
+        self.conversation_id = conversation_id
         self.database = Database()
-        # self.database.delete_table()
-        # self.database.create_table()
+        self.database.delete_table()
+        self.database.create_table()
         
         # Get data from Slack
-        # self.slack_api_manager = SlackAPIManager('api-token')
-        # self.user_json = self.slack_api_manager.get_user_list()
-        # self.messages_json = self.slack_api_manager.get_conversation_history('conversation-token')
+        self.slack_api_manager = SlackAPIManager('xoxb-5571078244199-5571084859927-x7f6BffTpcdxDjflW7koiwfm')
+        self.user_json = self.slack_api_manager.get_user_list()
+        self.messages_json = self.slack_api_manager.get_conversation_history(self.conversation_id)
 
     def set_up(self):
         # Populate users table
@@ -32,7 +32,7 @@ class MessageManager():
             self.database.add_message(key, value["conversation_id"], value["send_id"], value["message"], image_prompt)
 
     def get_data(self):
-        history = self.database.get_message(79225)
-        # history = self.database.get_message(self.conversation_id)
+        # history = self.database.get_message(79225)
+        history = self.database.get_message(self.conversation_id)
         return history
 
