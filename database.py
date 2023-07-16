@@ -140,7 +140,7 @@ class Database(object):
             send_name = cur.fetchone()
             if send_name is None:
                 raise Exception("Sender doesn't exist")
-            history.append({"msgid": row[0], "send_name": send_name[0], "message": row[2]})
+            history.append(send_name[0]+": "+row[2])
         return history
     
     # Pulled by general client/ server to get full message history
