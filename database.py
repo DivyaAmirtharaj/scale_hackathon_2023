@@ -1,6 +1,5 @@
 import sqlite3
 import re
-import random
 
 def thread_db(fn):
     def set_up(self, *args, **kwargs):
@@ -13,71 +12,65 @@ def thread_db(fn):
     return set_up
 
 class Database(object):
-    def __init__(self, port) -> None:
-        self.port = port
+    def __init__(self) -> None:
+        pass
     
     # Called upon initialization of the server to create a new table to store unique user info, as well as messages
     @thread_db
     def create_table(self, con, cur):
-        # create user table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                uuid integer PRIMARY KEY,
-                name text,
-                character_prompt text,
-            );
+                uuid string PRIMARY KEY,
+                username text,
+                character_prompt text
+            )
         """)
         # create a conversations table
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS conversation (
+            CREATE TABLE IF NOT EXISTS conversations (
                 conversation_id integer PRIMARY KEY,
-                uuid_list text,
-            );
+                uuid_list text
+            )
         """)
         # create a messages table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 msgid integer PRIMARY KEY,
                 conversation_id integer,
-                timestamp integer,
-                send_id integer,
+                timestamp float,
+                send_id string,
                 message text,
-                message_metadata text,
-                prompt text,
-            );
+                prompt text
+            )
         """)
         con.commit()
     
     @thread_db
     def delete_table(self, con, cur):
         cur.execute("DROP table IF EXISTS messages")
-        cur.execute("DROP table IF EXISTS conversation")
+        cur.execute("DROP table IF EXISTS conversations")
         cur.execute("DROP table IF EXISTS users")
         con.commit()
     
     @thread_db
-    def add_users(self, con, cur, name):
-        # Random generation of uuid for thread safety
-        uuid = random.randint(1, 2**20)
-        character_prompt = "filler"
-        # Update login status if successful
+    def add_users(self, con, cur, uuid, username, character_prompt):
         cur.execute("""
-            INSERT INTO users (uuid, name, character_prompt)
+            INSERT INTO users (uuid, username, character_prompt)
                 VALUES (?, ?, ?)
-        """, [uuid, name, character_prompt])
+        """, [uuid, username, character_prompt])
         con.commit()
 
-    # Pulls the unique id for each username during message sending/ receiving
+    # Pulls the unique id for each name during message sending/ receiving
     @thread_db
     def get_uuid(self, con, cur, username):
         # Given the username, it returns the uuid
         cur.execute("""
-            SELECT uuid FROM users WHERE username = ?
+            SELECT uuid FROM users WHERE name = ?
         """, [username])
         val = cur.fetchone()
         if val is None:
             # Raise exception if no user is found in the database
-            raise Exception("No user found for this username")
+            raise Exception("No user found for this name")
         return val[0]
     
     # Pulls the username from the unique id, used primarily for formatting and user comfort when reading messages
@@ -96,29 +89,19 @@ class Database(object):
             raise Exception("No user found for this uuid")
         return user[0]
     
-    
-    # Deletes user from all user table, and removes all the messages sent to them
+    # If a conversation, create a new conversation id and add the list of users that are in the conversation
     @thread_db
-    def delete_user(self, con, cur, username):
-        """
-        Delete a user and all of the messages that a user has received.
-        """
-        uuid = self.get_uuid(username)
+    def add_conversation(self, con, cur, conversation_id, uuid_list):
         cur.execute("""
-                    DELETE FROM users WHERE (username = ?)
-                """, [username])
-        # Only received messages are deleted, whereas in our custom protocol users can still see messages sent by 
-        # deleted users.
-        cur.execute("""
-                    DELETE FROM messages WHERE (receive_id = ?)
-                """, [uuid])
+            INSERT INTO conversations (conversation_id, uuid_list)
+                VALUES (?, ?)
+        """, [conversation_id, uuid_list])
         con.commit()
-
+        
     # Adds messages sent from the clients into the database.  Names the messages by pulling the most recent entry
     # in the database and adding 1 to create a unique message id.
     @thread_db
-    def add_message(self, con, cur, send_id, receive_id, message):
-        
+    def add_message(self, con, cur, timestamp, conversation_id, send_id, message, image_prompt):
         # Selects the most recent message
         cur.execute("""
             SELECT msgid FROM messages ORDER BY msgid DESC LIMIT 1
@@ -131,24 +114,23 @@ class Database(object):
             latest = latest[0]
         try:
             cur.execute("""
-                INSERT INTO messages (msgid, send_id, message)
-                    VALUES (?, ?, ?, ?)
-            """, [latest + 1, send_id, receive_id, message])
+                INSERT INTO messages (msgid, timestamp, conversation_id, send_id, message, prompt)
+                    VALUES (?, ?, ?, ?, ?, ?)
+            """, [latest + 1, timestamp, conversation_id, send_id, message, image_prompt])
         except Exception as e:
             print(e)
         con.commit()
 
-    # Called by the message stream in the grpc client/ server and queries all message history.  We use checkpoints
-    # to identify which messages in history have already been sent and which should be queued.
+    # Get full message history for a conversation
     @thread_db
-    def get_message(self, con, cur, receive_id):
-        # Given a receiver_id, and the sender_id get the message history between the two users
+    def get_message(self, con, cur, conversation_id):
+        # Given a conversation_id, pull all messages in
         cur.execute("""
-            SELECT msgid, send_id, receive_id, message 
+            SELECT msgid, send_id, message 
             FROM messages
-            WHERE (receive_id = ?)
+            WHERE (conversation_id = ?)
             ORDER BY msgid ASC
-        """, [receive_id])
+        """, [conversation_id])
         rows = cur.fetchall()
         if rows is None or len(rows) == 0:
             raise Exception("No message history")
@@ -158,11 +140,7 @@ class Database(object):
             send_name = cur.fetchone()
             if send_name is None:
                 raise Exception("Sender doesn't exist")
-            cur.execute("SELECT username FROM users WHERE (uuid = ?)", [row[2]])
-            receive_name = cur.fetchone()
-            if receive_name is None:
-                raise Exception("Receiver doesn't exist")
-            history.append({"msgid": row[0], "send_name": send_name[0], "receive_name": receive_name[0], "message": row[3]})
+            history.append(send_name[0]+": "+row[2])
         return history
     
     # Pulled by general client/ server to get full message history
@@ -186,11 +164,3 @@ class Database(object):
         for row in rows:
             history.append({'send_id': row[1], 'message': row[3]})
         return history
-
-    # Deletes seen messages from the database to prevent duplicate views
-    @thread_db
-    def delete_history_for_receiver(self, con, cur, receive_id):
-        cur.execute("""
-            DELETE FROM messages WHERE (receive_id = ?)
-        """, [receive_id])
-        con.commit()
