@@ -74,6 +74,7 @@ volume = NetworkFileSystem.persisted("comic-multicharactergen-vol")
 MOUNT_DIR = Path("/mnt")
 MODEL_DIR = Path("/mnt/model01") 
 MODEL2_DIR = Path("/mnt/model02")
+MODEL3_DIR = Path("/mnt/model03")
 
 # ## Config
 #
@@ -87,10 +88,10 @@ class SharedConfig:
     """Configuration information shared across project components."""
 
     # The instance name is the "proper noun" we're teaching the model
-    instance_name: str = "Frosty"
+    instance_name: str = "Sally"
     # That proper noun is usually a member of some class (person, bird),
     # and sharing that information with the model helps it generalize better.
-    class_name: str = "Man"
+    class_name: str = "Woman"
 
 
 @dataclass
@@ -181,8 +182,8 @@ def train(instance_example_urls):
 
     # set up runner-local image and shared model weight directories
     # img_path = load_images(instance_example_urls)
-    img_path = "/mnt/img/man2"
-    os.makedirs(MODEL2_DIR, exist_ok=True)
+    img_path = "/mnt/img/woman1"
+    os.makedirs(MODEL3_DIR, exist_ok=True)
 
     # set up hugging face accelerate library for fast training
     write_basic_config(mixed_precision="fp16")
@@ -210,9 +211,9 @@ def train(instance_example_urls):
             "launch",
             "examples/dreambooth/train_dreambooth.py",
             "--train_text_encoder",  # needs at least 16GB of GPU RAM.
-            f"--pretrained_model_name_or_path={str(MODEL_DIR)}", #config.model_name
+            f"--pretrained_model_name_or_path={str(MODEL2_DIR)}", #config.model_name
             f"--instance_data_dir={img_path}",
-            f"--output_dir={MODEL2_DIR}",
+            f"--output_dir={MODEL3_DIR}",
             f"--instance_prompt='{prompt}'",
             f"--resolution={config.resolution}",
             f"--train_batch_size={config.train_batch_size}",
@@ -246,9 +247,9 @@ class Model:
         from diffusers import DDIMScheduler, StableDiffusionPipeline
 
         # set up a hugging face inference pipeline using our model
-        ddim = DDIMScheduler.from_pretrained(MODEL2_DIR, subfolder="scheduler")
+        ddim = DDIMScheduler.from_pretrained(MODEL3_DIR, subfolder="scheduler")
         pipe = StableDiffusionPipeline.from_pretrained(
-            MODEL2_DIR,
+            MODEL3_DIR,
             scheduler=ddim,
             torch_dtype=torch.float16,
             safety_checker=None,
@@ -321,7 +322,7 @@ def fastapi_app():
         fn=go,
         inputs="text",
         outputs=gr.Image(shape=(512, 512)),
-        title=f"Cast: Frosty the Man, Dzude the Man, Sally the Woman, Xerina the Woman.",
+        title=f"Cast: Frosty the Man, Dzude the Man, Sally the Woman.",
         description=description,
         examples=example_prompts,
         css="/assets/index.css",
