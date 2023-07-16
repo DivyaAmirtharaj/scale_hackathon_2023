@@ -6,7 +6,7 @@ from slack_helper import clean_user_list, clean_message_list
 class MessageManager():
     def __init__(self) -> None:
         self.database = Database()
-        self.database.delete_table()
+        """self.database.delete_table()
         self.database.create_table()
         
         # Get data from Slack
@@ -27,5 +27,5 @@ class MessageManager():
             self.database.add_conversation(key, value)
         for key, value in message_dict.items():
             image_prompt = ""
-            self.database.add_message(key, value["conversation_id"], value["send_id"], value["message"], image_prompt)
+            self.database.add_message(key, value["conversation_id"], value["send_id"], value["message"], image_prompt)"""
 
