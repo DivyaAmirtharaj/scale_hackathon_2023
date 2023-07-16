@@ -20,7 +20,7 @@ class SlackAPIManager:
         endpoint = 'conversations.history'
         params = {'channel': conversation_id}
 
-        file_path = "/slack_data/messages.json"
+        file_path = "slack_data/messages.json"
         api_result = self.make_api_call(endpoint, params=params)
 
         # Open the file in write mode
@@ -30,16 +30,12 @@ class SlackAPIManager:
 
         return api_result
     
-    def get_conversation_list(self):
-        endpoint = 'conversations.list'
-        return self.make_api_call(endpoint)
-    
     def get_user_list(self):
         endpoint = 'users.list'
 
-        file_path = "/slack_data/messages.json"
+        file_path = "slack_data/messages.json"
         api_result = self.make_api_call(endpoint)
-        
+
         # Open the file in write mode
         with open(file_path, "w") as file:
             for line in api_result:

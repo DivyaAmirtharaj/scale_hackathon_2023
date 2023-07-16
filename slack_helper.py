@@ -24,11 +24,11 @@ def clean_message_list(messages_json: dict):
     return message_dict, conversation_dict
 
 
-with open('example_jsons/user.json', 'r') as file:
+"""with open('example_jsons/user.json', 'r') as file:
     user_json = json.load(file)
 user_dict = clean_user_list(user_json)
 
 
 with open('example_jsons/messages.json', 'r') as file:
     messages_json = json.load(file)
-message_dict, conversation_dict = clean_message_list(messages_json)
+message_dict, conversation_dict = clean_message_list(messages_json)"""

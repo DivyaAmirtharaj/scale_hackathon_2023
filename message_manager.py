@@ -9,7 +9,7 @@ class MessageManager():
         self.database.delete_table()
         self.database.create_table()
         
-        self.slack_api_manager = SlackAPIManager('insert_token')
+        self.slack_api_manager = SlackAPIManager('xoxb-5571078244199-5571084859927-Q6uxPD2B9SfiZW8ceQChd5qy')
         user_json = self.slack_api_manager.get_user_list()
         messages_json = self.slack_api_manager.get_conversation_history()
 
