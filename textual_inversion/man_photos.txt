@@ -1,0 +1,3 @@
+/home/chloel/ComicBookGen./scale_hackathon_2023/textual_inversion/data/man/dude01.png
+/home/chloel/ComicBookGen./scale_hackathon_2023/textual_inversion/data/man/dude02.png
+/home/chloel/ComicBookGen./scale_hackathon_2023/textual_inversion/data/man/dude03.png
