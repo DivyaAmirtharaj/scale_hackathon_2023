@@ -24,6 +24,8 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
+import PIL
+
 from modal import (
     Image,
     Mount,
@@ -32,7 +34,10 @@ from modal import (
     Stub,
     asgi_app,
     method,
+    web_endpoint,
 )
+
+from typing import Dict
 
 web_app = FastAPI()
 assets_path = Path(__file__).parent / "assets"
@@ -287,54 +292,66 @@ class Model:
 @stub.function(
     image=image,
     concurrency_limit=3,
-    mounts=[Mount.from_local_dir(assets_path, remote_path="/assets")],
 )
-@asgi_app()
-def fastapi_app():
-    import gradio as gr
-    from gradio.routes import mount_gradio_app
-
-    # Call to the GPU inference function on Modal.
-    def go(text):
-        return Model().inference.call(text, config)
-
-    # set up AppConfig
+@web_endpoint(method="POST")
+def download_scene(item: Dict):
+    imdir = "IMG.jpg"
     config = AppConfig()
+    img = PIL.Image(Model().inference.call(item['text'], config))
+    img.save(imdir)
+    return "Saved image to " + imdir
 
-    instance_phrase = f"{config.instance_name} the {config.class_name}"
+# @stub.function(
+#     image=image,
+#     concurrency_limit=3,
+#     mounts=[Mount.from_local_dir(assets_path, remote_path="/assets")],
+# )
+# @asgi_app()
+# def fastapi_app():
+#     import gradio as gr
+#     from gradio.routes import mount_gradio_app
 
-    example_prompts = [
-        f"{instance_phrase}",
-        f"a painting of {instance_phrase.title()} With A Pearl Earring, by Vermeer",
-        f"oil painting of {instance_phrase} flying through space as an astronaut",
-        f"a painting of {instance_phrase} in cyberpunk city. character design by cory loftis. volumetric light, detailed, rendered in octane",
-        f"drawing of {instance_phrase} high quality, cartoon, path traced, by studio ghibli and don bluth",
-    ]
+#     # Call to the GPU inference function on Modal.
+#     def go(text):
+#         return Model().inference.call(text, config)
 
-    modal_docs_url = "https://modal.com/docs/guide"
-    modal_example_url = f"{modal_docs_url}/ex/dreambooth_app"
+#     # set up AppConfig
+#     config = AppConfig()
 
-    description = f"""Describe what they are doing or how a particular artist or style would depict them. Be fantastical! Try the examples below for inspiration.
-    """
+#     instance_phrase = f"{config.instance_name} the {config.class_name}"
 
-    # add a gradio UI around inference
-    interface = gr.Interface(
-        fn=go,
-        inputs="text",
-        outputs=gr.Image(shape=(512, 512)),
-        title=f"Cast: Frosty the Man, Dzude the Man, Sally the Woman.",
-        description=description,
-        examples=example_prompts,
-        css="/assets/index.css",
-        allow_flagging="never",
-    )
+#     example_prompts = [
+#         f"{instance_phrase}",
+#         f"a painting of {instance_phrase.title()} With A Pearl Earring, by Vermeer",
+#         f"oil painting of {instance_phrase} flying through space as an astronaut",
+#         f"a painting of {instance_phrase} in cyberpunk city. character design by cory loftis. volumetric light, detailed, rendered in octane",
+#         f"drawing of {instance_phrase} high quality, cartoon, path traced, by studio ghibli and don bluth",
+#     ]
 
-    # mount for execution on Modal
-    return mount_gradio_app(
-        app=web_app,
-        blocks=interface,
-        path="/",
-    )
+#     modal_docs_url = "https://modal.com/docs/guide"
+#     modal_example_url = f"{modal_docs_url}/ex/dreambooth_app"
+
+#     description = f"""Describe what they are doing or how a particular artist or style would depict them. Be fantastical! Try the examples below for inspiration.
+#     """
+
+#     # add a gradio UI around inference
+#     interface = gr.Interface(
+#         fn=go,
+#         inputs="text",
+#         outputs=gr.Image(shape=(512, 512)),
+#         title=f"Cast: Frosty the Man, Dzude the Man, Sally the Woman.",
+#         description=description,
+#         examples=example_prompts,
+#         css="/assets/index.css",
+#         allow_flagging="never",
+#     )
+
+#     # mount for execution on Modal
+#     return mount_gradio_app(
+#         app=web_app,
+#         blocks=interface,
+#         path="/",
+#     )
 
 
 # ## Running this on the command line
