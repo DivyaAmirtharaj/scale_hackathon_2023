@@ -4,7 +4,7 @@ import subprocess
 
 def run():
     manager = MessageManager()
-    # manager.set_up()
+    manager.set_up()
     message_history = manager.get_data()
     message_string = "\n".join(message_history)
     print(message_string)

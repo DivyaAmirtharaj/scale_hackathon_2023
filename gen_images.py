@@ -124,7 +124,7 @@ def entrypoint(samples: int = 1, steps: int = 40, batch_size: int = 1):
     with open("dialogue.txt", "r") as f:
         # Read the file
         dialogue = f.read()
-    # dialogue_only = dialogue_cleaned(dialogue)
+    dialogue_only = dialogue_cleaned(dialogue)
     gpt_output = dialogue_to_gpt_input(dialogue)
     diffusion_prompts = gpt_output_to_diffusion_prompt(gpt_output)
 

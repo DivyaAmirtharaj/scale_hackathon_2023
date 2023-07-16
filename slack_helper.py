@@ -29,6 +29,6 @@ def clean_message_list(messages_json: dict):
 user_dict = clean_user_list(user_json)"""
 
 
-"""with open('slack_data/messages.json', 'r') as file:
-    messages_json = json.load(file)
-message_dict, conversation_dict = clean_message_list(messages_json)"""
+# with open('slack_data/messages.json', 'r') as file:
+#     messages_json = json.load(file)
+# message_dict, conversation_dict = clean_message_list(messages_json)
