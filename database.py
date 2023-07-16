@@ -93,7 +93,7 @@ class Database(object):
     @thread_db
     def add_conversation(self, con, cur, conversation_id, uuid_list):
         cur.execute("""
-            INSERT INTO conversation (conversation_id, uuid_list)
+            INSERT INTO conversations (conversation_id, uuid_list)
                 VALUES (?, ?)
         """, [conversation_id, uuid_list])
         con.commit()
@@ -115,7 +115,7 @@ class Database(object):
             latest = latest[0]
         try:
             cur.execute("""
-                INSERT INTO messages (msgid, timestamp, conversation_id, send_id, message, image_prompt)
+                INSERT INTO messages (msgid, timestamp, conversation_id, send_id, message, prompt)
                     VALUES (?, ?, ?)
             """, [latest + 1, timestamp, conversation_id, send_id, message, image_prompt])
         except Exception as e:
